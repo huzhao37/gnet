@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"log"
@@ -10,28 +11,35 @@ import (
 	"github.com/huzhao37/gnet"
 )
 
-type pushServer struct {
+type EpmsServer struct {
 	*gnet.EventServer
 	tick             time.Duration
 	connectedSockets sync.Map
 }
 
-func (ps *pushServer) OnInitComplete(srv gnet.Server) (action gnet.Action) {
+////on  init complete when serve ini
+func (ps *EpmsServer) OnInitComplete(srv gnet.Server) (action gnet.Action) {
 	log.Printf("Push server is listening on %s (multi-cores: %t, loops: %d), "+
 		"pushing data every %s ...\n", srv.Addr.String(), srv.Multicore, srv.NumEventLoop, ps.tick.String())
 	return
 }
-func (ps *pushServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
+
+//on opened
+func (ps *EpmsServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	log.Printf("Socket with addr: %s has been opened...\n", c.RemoteAddr().String())
 	ps.connectedSockets.Store(c.RemoteAddr().String(), c)
 	return
 }
-func (ps *pushServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
+
+//on closed
+func (ps *EpmsServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 	log.Printf("Socket with addr: %s is closing...\n", c.RemoteAddr().String())
 	ps.connectedSockets.Delete(c.RemoteAddr().String())
 	return
 }
-func (ps *pushServer) Tick() (delay time.Duration, action gnet.Action) {
+
+//ticks push
+func (ps *EpmsServer) Tick() (delay time.Duration, action gnet.Action) {
 	log.Println("It's time to push data to clients!!!")
 	ps.connectedSockets.Range(func(key, value interface{}) bool {
 		addr := key.(string)
@@ -42,7 +50,9 @@ func (ps *pushServer) Tick() (delay time.Duration, action gnet.Action) {
 	delay = ps.tick
 	return
 }
-func (ps *pushServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
+
+//on message
+func (ps *EpmsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
 	out = frame
 	return
 }
@@ -61,6 +71,21 @@ func main() {
 	if interval > 0 {
 		ticker = true
 	}
-	push := &pushServer{tick: interval}
-	log.Fatal(gnet.Serve(push, fmt.Sprintf("tcp://:%d", port), gnet.WithMulticore(multicore), gnet.WithTicker(ticker)))
+	push := &EpmsServer{tick: interval}
+	//自定义编解码
+	encoderConfig := gnet.EncoderConfig{
+		ByteOrder:                       binary.BigEndian,
+		LengthFieldLength:               4,
+		LengthAdjustment:                0,
+		LengthIncludesLengthFieldLength: false,
+	}
+	decoderConfig := gnet.DecoderConfig{
+		ByteOrder:           binary.BigEndian,
+		LengthFieldOffset:   0,
+		LengthFieldLength:   4,
+		LengthAdjustment:    0,
+		InitialBytesToStrip: 4,
+	}
+
+	log.Fatal(gnet.Serve(push, fmt.Sprintf("tcp://:%d", port), gnet.WithMulticore(multicore), gnet.WithTicker(ticker), gnet.WithCodec(gnet.NewLengthFieldBasedFrameCodec(encoderConfig, decoderConfig))))
 }
