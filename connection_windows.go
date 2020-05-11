@@ -10,9 +10,9 @@ package gnet
 import (
 	"net"
 
-	"github.com/panjf2000/gnet/pool/bytebuffer"
-	prb "github.com/panjf2000/gnet/pool/ringbuffer"
-	"github.com/panjf2000/gnet/ringbuffer"
+	"github.com/huzhao37/gnet/pool/bytebuffer"
+	prb "github.com/huzhao37/gnet/pool/ringbuffer"
+	"github.com/huzhao37/gnet/ringbuffer"
 )
 
 type stderr struct {

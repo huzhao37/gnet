@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/panjf2000/gnet/pool/bytebuffer"
-	"github.com/panjf2000/gnet/pool/goroutine"
+	"github.com/huzhao37/gnet/pool/bytebuffer"
+	"github.com/huzhao37/gnet/pool/goroutine"
 	"github.com/valyala/bytebufferpool"
 )
 

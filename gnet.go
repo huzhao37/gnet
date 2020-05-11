@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/panjf2000/gnet/internal/netpoll"
+	"github.com/huzhao37/gnet/internal/netpoll"
 )
 
 // Action is an action that occurs after the completion of an event.

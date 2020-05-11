@@ -14,7 +14,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/panjf2000/gnet"
+	"github.com/huzhao37/gnet"
 )
 
 var res string

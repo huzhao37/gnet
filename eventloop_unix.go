@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/panjf2000/gnet/internal/netpoll"
+	"github.com/huzhao37/gnet/internal/netpoll"
 	"golang.org/x/sys/unix"
 )
 

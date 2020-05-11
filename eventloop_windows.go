@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/panjf2000/gnet/pool/bytebuffer"
+	"github.com/huzhao37/gnet/pool/bytebuffer"
 )
 
 type eventloop struct {

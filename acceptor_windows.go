@@ -11,7 +11,7 @@ import (
 	"hash/crc32"
 	"time"
 
-	"github.com/panjf2000/gnet/pool/bytebuffer"
+	"github.com/huzhao37/gnet/pool/bytebuffer"
 )
 
 // hashCode hashes a string to a unique hashcode.

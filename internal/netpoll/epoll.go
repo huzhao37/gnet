@@ -11,7 +11,7 @@ import (
 	"log"
 	"unsafe"
 
-	"github.com/panjf2000/gnet/internal"
+	"github.com/huzhao37/gnet/internal"
 	"golang.org/x/sys/unix"
 )
 
