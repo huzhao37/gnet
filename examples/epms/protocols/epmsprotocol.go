@@ -2,10 +2,11 @@
  * @Author: hiram
  * @Date: 2020/5/11 17:47
  */
-package gnet
+package protocols
 
 import (
 	"encoding/binary"
+	"github.com/huzhao37/gnet"
 	"reflect"
 	"unsafe"
 )
@@ -76,61 +77,62 @@ type EpmsBody struct {
 }
 
 //just deal header protocol in here,body-dealing in biz,because of it refers to biz msg type
-func (d *EPMSFrameCodec) Encode(c Conn, buf []byte) ([]byte, error) {
-	if len(buf) > epmsHeaderLen {
-		dataLen := binary.LittleEndian.Uint32(buf) //小端字节流(需要重写ringBuffer包)
-		//解析header报文
-		if len(buf) >= int(dataLen) {
-			//todo
-			epmsHEAD := &EpmsHeader{}
-			header := make([]byte, 16)
-			_, err := buf.VirtualRead(header)
-			if err != nil {
-				log.Error("[epms-unpack]:%s", err)
-			}
-			epmsHEAD = bytesToEpmsHeader(header)
-			if epmsHEAD.magicNum != 0x33533 {
-				log.Error("[epms-unpack]:magic error%d", epmsHEAD.magicNum)
-				buf.VirtualFlush()
-				return nil, nil
-			}
-			if epmsHEAD.version != 2 {
-				log.Error("[epms-unpack]:version error%d", epmsHEAD.version)
-				buf.VirtualFlush()
-				return nil, nil
-			}
-			//crc32校验
-			if epmsHEAD.checkSum != 0 {
-				//todo
-			}
-			//数据长度不对应
-			if int(dataLen) != epmsHEAD.bodyLen+16 {
-				log.Error("[epms-unpack]:bodyLen error%d", epmsHEAD.bodyLen)
-				buf.VirtualFlush()
-				return nil, nil
-			}
-			//返回body数据
-			body := make([]byte, dataLen-16)
-			_, _ = buf.VirtualRead(body)
-
-			buf.VirtualFlush()
-			return nil, body
-		} else {
-			buf.VirtualRevert()
-		}
-	}
+func (d *EPMSFrameCodec) Decode(c gnet.Conn) ([]byte, error) {
+	//buf:=c.Read()
+	//c.ResetBuffer()
+	//if len(buf) > epmsHeaderLen {
+	//	dataLen := binary.LittleEndian.Uint32(buf) //小端字节流(需要重写ringBuffer包)
+	//	//解析header报文
+	//	if len(buf) >= int(dataLen) {
+	//		//todo
+	//		epmsHEAD := &EpmsHeader{}
+	//		header := make([]byte, 16)
+	//		_, err := buf.VirtualRead(header)
+	//		if err != nil {
+	//			log.Error("[epms-unpack]:%s", err)
+	//		}
+	//		epmsHEAD = bytesToEpmsHeader(header)
+	//		if epmsHEAD.magicNum != 0x33533 {
+	//			log.Error("[epms-unpack]:magic error%d", epmsHEAD.magicNum)
+	//			buf.VirtualFlush()
+	//			return nil, nil
+	//		}
+	//		if epmsHEAD.version != 2 {
+	//			log.Error("[epms-unpack]:version error%d", epmsHEAD.version)
+	//			buf.VirtualFlush()
+	//			return nil, nil
+	//		}
+	//		//crc32校验
+	//		if epmsHEAD.checkSum != 0 {
+	//			//todo
+	//		}
+	//		//数据长度不对应
+	//		if int(dataLen) != epmsHEAD.bodyLen+16 {
+	//			log.Error("[epms-unpack]:bodyLen error%d", epmsHEAD.bodyLen)
+	//			buf.VirtualFlush()
+	//			return nil, nil
+	//		}
+	//		//返回body数据
+	//		body := make([]byte, dataLen-16)
+	//		_, _ = buf.VirtualRead(body)
+	//
+	//		buf.VirtualFlush()
+	//		return nil, body
+	//	} else {
+	//		buf.VirtualRevert()
+	//	}
+	//}
 	return nil, nil
 }
 
-//param:data is epms-body,the func add epms-header
-func (d *EPMSFrameCodec) Decode(c Conn) ([]byte, error) {
-	data := c.Read()
-	dataLen := len(data)
+//param:buf is epms-body,the func add epms-header
+func (d *EPMSFrameCodec) Encode(c gnet.Conn, buf []byte) ([]byte, error) {
+	dataLen := len(buf)
 	header := &EpmsHeader{magicNum: 0x33533, version: 2, checkSum: 0, bodyLen: dataLen}
 	ret := make([]byte, epmsHeaderLen+dataLen)
-	binary.LittleEndian.PutUint32(ret, uint32(dataLen))
+	binary.LittleEndian.PutUint32(ret, uint32(epmsHeaderLen+dataLen))
 	copy(ret[:epmsHeaderLen], epmsHeaderToBytes(header))
-	copy(ret[epmsHeaderLen:], data)
+	copy(ret[epmsHeaderLen:], buf)
 	return ret, nil
 }
 

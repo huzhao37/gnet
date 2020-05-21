@@ -4,7 +4,10 @@
 
 package gnet
 
-import "time"
+import (
+	"crypto/tls"
+	"time"
+)
 
 // Option is a function that will set up option.
 type Option func(opts *Options)
@@ -47,6 +50,12 @@ type Options struct {
 	// Logger is the customized logger for logging info, if it is not set,
 	// default standard logger from log package is used.
 	Logger Logger
+
+	// tcp-tls/ssl
+	SSL bool
+
+	// tcp-tls/ssl
+	Cfg *tls.Config
 }
 
 // WithOptions sets up all options.
@@ -109,5 +118,19 @@ func WithCodec(codec ICodec) Option {
 func WithLogger(logger Logger) Option {
 	return func(opts *Options) {
 		opts.Logger = logger
+	}
+}
+
+// WithCfg sets up a tcp tsl/ssl config.
+func WithCfg(cfg *tls.Config) Option {
+	return func(opts *Options) {
+		opts.Cfg = cfg
+	}
+}
+
+// WithSLL sets up a tcp start tsl/ssl.
+func WithSLL(ssl bool) Option {
+	return func(opts *Options) {
+		opts.SSL = ssl
 	}
 }

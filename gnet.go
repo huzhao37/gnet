@@ -6,6 +6,7 @@
 package gnet
 
 import (
+	"crypto/tls"
 	"log"
 	"net"
 	"os"
@@ -61,6 +62,9 @@ type Server struct {
 
 	// TCPKeepAlive (SO_KEEPALIVE) socket option.
 	TCPKeepAlive time.Duration
+
+	// tcp-tls/ssl
+	Cfg *tls.Config
 }
 
 // CountConnections counts the number of currently active connections and returns it.
@@ -257,8 +261,13 @@ func Serve(eventHandler EventHandler, addr string, opts ...Option) error {
 		if options.ReusePort && runtime.GOOS != "windows" {
 			ln.ln, err = netpoll.ReusePortListen(ln.network, ln.addr)
 		} else {
-			ln.ln, err = net.Listen(ln.network, ln.addr)
+			if options.SSL {
+				ln.ln, err = tls.Listen(ln.network, ln.addr, options.Cfg)
+			} else {
+				ln.ln, err = net.Listen(ln.network, ln.addr)
+			}
 		}
+		//ln.ln,err=tls.Listen(ln.network, ln.addr,nil)
 	}
 	if err != nil {
 		return err

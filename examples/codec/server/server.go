@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/tls"
 	"encoding/binary"
 	"flag"
 	"fmt"
@@ -11,6 +13,11 @@ import (
 	"github.com/huzhao37/gnet/pool/goroutine"
 )
 
+var (
+	crtPath     = "C:\\openssl\\ssl\\bin\\server.crt"
+	keyFilePath = "C:\\openssl\\ssl\\bin\\server_no_passwd.key"
+)
+
 type codecServer struct {
 	*gnet.EventServer
 	addr       string
@@ -18,6 +25,8 @@ type codecServer struct {
 	async      bool
 	codec      gnet.ICodec
 	workerPool *goroutine.Pool
+	ssl        bool
+	cfg        *tls.Config
 }
 
 func (cs *codecServer) OnInitComplete(srv gnet.Server) (action gnet.Action) {
@@ -38,7 +47,7 @@ func (cs *codecServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet
 	return
 }
 
-func testCodecServe(addr string, multicore, async bool, codec gnet.ICodec) {
+func testCodecServe(addr string, multicore, async bool, codec gnet.ICodec, ssl bool) {
 	var err error
 	if codec == nil {
 		encoderConfig := gnet.EncoderConfig{
@@ -56,8 +65,24 @@ func testCodecServe(addr string, multicore, async bool, codec gnet.ICodec) {
 		}
 		codec = gnet.NewLengthFieldBasedFrameCodec(encoderConfig, decoderConfig)
 	}
-	cs := &codecServer{addr: addr, multicore: multicore, async: async, codec: codec, workerPool: goroutine.Default()}
-	err = gnet.Serve(cs, addr, gnet.WithMulticore(multicore), gnet.WithTCPKeepAlive(time.Minute*5), gnet.WithCodec(codec))
+
+	crt, err := tls.LoadX509KeyPair(crtPath, keyFilePath)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	tlsConfig := &tls.Config{}
+	tlsConfig.Certificates = []tls.Certificate{crt}
+	// Time returns the current time as the number of seconds since the epoch.
+	// If Time is nil, TLS uses time.Now.
+	tlsConfig.Time = time.Now
+	// Rand provides the source of entropy for nonces and RSA blinding.
+	// If Rand is nil, TLS uses the cryptographic random reader in package
+	// crypto/rand.
+	// The Reader must be safe for use by multiple goroutines.
+	tlsConfig.Rand = rand.Reader
+
+	cs := &codecServer{addr: addr, multicore: multicore, async: async, codec: codec, workerPool: goroutine.Default(), ssl: ssl, cfg: tlsConfig}
+	err = gnet.Serve(cs, addr, gnet.WithMulticore(multicore), gnet.WithTCPKeepAlive(time.Minute*5), gnet.WithCodec(codec), gnet.WithCfg(cs.cfg), gnet.WithSLL(ssl))
 	if err != nil {
 		panic(err)
 	}
@@ -72,5 +97,5 @@ func main() {
 	flag.BoolVar(&multicore, "multicore", true, "multicore")
 	flag.Parse()
 	addr := fmt.Sprintf("tcp://:%d", port)
-	testCodecServe(addr, multicore, false, nil)
+	testCodecServe(addr, multicore, false, nil, true)
 }

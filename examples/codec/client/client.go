@@ -3,15 +3,15 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/binary"
 	"fmt"
-	"net"
-
 	"github.com/smallnest/goframe"
 )
 
 func main() {
-	conn, err := net.Dial("tcp", "127.0.0.1:9000")
+	config := &tls.Config{InsecureSkipVerify: true}
+	conn, err := tls.Dial("tcp", "huzhao.aishu.com:9000", config) //net.Dial("tcp", "127.0.0.1:9000")
 	if err != nil {
 		panic(err)
 	}
