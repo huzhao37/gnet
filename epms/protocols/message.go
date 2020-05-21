@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/huzhao37/gnet/examples/epms/util"
+	"github.com/huzhao37/gnet/epms/util"
 	"io"
 )
 

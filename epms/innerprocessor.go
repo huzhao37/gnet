@@ -7,7 +7,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/huzhao37/gnet/examples/epms/protocols"
+	"github.com/huzhao37/gnet/epms/protocols"
 	"log"
 	"reflect"
 	"sync"
